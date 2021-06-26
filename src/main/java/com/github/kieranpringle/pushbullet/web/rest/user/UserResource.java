@@ -8,11 +8,12 @@ import java.net.URISyntaxException;
 import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 
 @RestController
 @RequestMapping("/users")
@@ -34,18 +35,19 @@ public class UserResource {
      * @param userToCreate the user to create
      * @return the created user
      */
-    public ResponseEntity<User> createUser(@RequestBody CreateUserRequest userToCreate)
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public User createUser(@RequestBody CreateUserRequest userToCreate)
             throws UserAlreadyExistsException, URISyntaxException {
         String name = userToCreate.getName();
-        log.info("Request to create user : %s", name);
+        log.info("Request to create user : {}", name);
 
         // leverage URISyntaxException to test if we can store this user
         URI resultUri = new URI(String.format("%s/%s", API_BASE, name));
         User createdUser = repository.addUser(buildUser(userToCreate));
 
-        log.info("User successfully created : %s", name);
-        return ResponseEntity.created(resultUri)
-                .body(createdUser);
+        log.info("User successfully created : {}", name);
+        return createdUser;
     }
 
     private User buildUser(CreateUserRequest userToCreate) {

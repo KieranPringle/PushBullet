@@ -7,14 +7,10 @@ package com.github.kieranpringle.pushbullet.web.rest.user;
  * your DB. We also do not want User#creationTime or User#numberOfNotificationsPushed to be
  * available to be manually set.
  */
+
 public class CreateUserRequest {
     private String name;
     private String accessToken;
-
-    public CreateUserRequest(String name, String accessToken) {
-        this.name = name;
-        this.accessToken = accessToken;
-    }
 
     public String getName() {
         return name;

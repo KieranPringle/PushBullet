@@ -74,13 +74,9 @@ class UserResourceTest {
         when(mockRepository.addUser(any(User.class)))
                 .thenReturn(mockUser);
 
-        ResponseEntity<User> res = resource.createUser(req);
+        User res = resource.createUser(req);
 
-        assertThat(res.getStatusCode())
-                .as("Request should have been successful")
-                .isEqualTo(HttpStatus.CREATED);
-
-        assertThat(res.getBody())
+        assertThat(res)
                 .as("Request should return created user")
                 .isEqualTo(mockUser);
     }
@@ -101,6 +97,9 @@ class UserResourceTest {
     }
 
     private CreateUserRequest buildRequest(String name) {
-        return new CreateUserRequest(name, TOKEN);
+        CreateUserRequest req = new CreateUserRequest();
+        req.setName(name);
+        req.setAccessToken(TOKEN);
+        return req;
     }
 }
