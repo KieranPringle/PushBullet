@@ -24,13 +24,14 @@ public class UserRepository {
         return userRepository.get(name);
     }
 
-    synchronized public void addUser(User user) throws UserAlreadyExistsException {
+    synchronized public User addUser(User user) throws UserAlreadyExistsException {
         String name = user.getName();
 
-        User stored = userRepository.putIfAbsent(name, user);
-
-        if (stored != null) {
+        User alreadyStored = userRepository.putIfAbsent(name, user);
+        if (alreadyStored != null) {
             throw new UserAlreadyExistsException(name);
         }
+
+        return user;
     }
 }

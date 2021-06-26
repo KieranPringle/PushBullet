@@ -1,0 +1,106 @@
+package com.github.kieranpringle.pushbullet.web.rest.user;
+
+import com.github.kieranpringle.pushbullet.domain.User;
+import com.github.kieranpringle.pushbullet.exceptions.UserAlreadyExistsException;
+import com.github.kieranpringle.pushbullet.repository.UserRepository;
+import java.net.URISyntaxException;
+import java.time.Instant;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Unit (not integration!) tests for UserResource
+ */
+class UserResourceTest {
+
+    private static final String USERNAME = "username";
+    private static final String TOKEN = "accessToken";
+
+    private UserRepository mockRepository;
+    private User mockUser;
+
+    @Captor
+    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+    private UserResource resource;
+
+    @BeforeEach
+    public void setUp() {
+        mockRepository = mock(UserRepository.class);
+        mockUser = mock(User.class);
+        resource = new UserResource(mockRepository);
+    }
+
+    @Test
+    public void createUserWithCorrectParams()
+            throws UserAlreadyExistsException, URISyntaxException {
+        CreateUserRequest req = buildRequest();
+
+        when(mockRepository.addUser(userCaptor.capture()))
+                .thenReturn(mockUser);
+
+        resource.createUser(req);
+
+        User requestedUser = userCaptor.getValue();
+
+        assertThat(requestedUser.getName())
+                .as("Has the correct username")
+                .isEqualTo(USERNAME);
+        assertThat(requestedUser.getAccessToken())
+                .as("Has the correct username")
+                .isEqualTo(TOKEN);
+        assertThat(requestedUser.getCreationTime())
+                .as("Was created recently")
+                .isBetween(Instant.now().minusMillis(10000), Instant.now());
+    }
+
+    @Test
+    public void returnCreatedUser()
+            throws UserAlreadyExistsException, URISyntaxException {
+        CreateUserRequest req = buildRequest();
+
+        when(mockRepository.addUser(any(User.class)))
+                .thenReturn(mockUser);
+
+        ResponseEntity<User> res = resource.createUser(req);
+
+        assertThat(res.getStatusCode())
+                .as("Request should have been successful")
+                .isEqualTo(HttpStatus.CREATED);
+
+        assertThat(res.getBody())
+                .as("Request should return created user")
+                .isEqualTo(mockUser);
+    }
+
+    @Test
+    public void doesNotAttemptToCreateAUriIncompatibleUser() throws UserAlreadyExistsException {
+        CreateUserRequest req = buildRequest("&^£@");
+
+        assertThatThrownBy(() -> resource.createUser(req))
+                .isOfAnyClassIn(URISyntaxException.class);
+
+        verify(mockRepository, never()).addUser(any());
+    }
+
+
+    private CreateUserRequest buildRequest() {
+        return buildRequest(USERNAME);
+    }
+
+    private CreateUserRequest buildRequest(String name) {
+        return new CreateUserRequest(name, TOKEN);
+    }
+}
