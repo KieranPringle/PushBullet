@@ -1,16 +1,14 @@
 package com.github.kieranpringle.pushbullet.web.rest.user;
 
 import com.github.kieranpringle.pushbullet.domain.User;
+import com.github.kieranpringle.pushbullet.exceptions.InvalidUriException;
 import com.github.kieranpringle.pushbullet.exceptions.UserAlreadyExistsException;
 import com.github.kieranpringle.pushbullet.repository.UserRepository;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,7 +43,7 @@ class UserResourceTest {
 
     @Test
     public void createUserWithCorrectParams()
-            throws UserAlreadyExistsException, URISyntaxException {
+            throws UserAlreadyExistsException, InvalidUriException {
         CreateUserRequest req = buildRequest();
 
         when(mockRepository.addUser(userCaptor.capture()))
@@ -68,7 +66,7 @@ class UserResourceTest {
 
     @Test
     public void returnCreatedUser()
-            throws UserAlreadyExistsException, URISyntaxException {
+            throws UserAlreadyExistsException, InvalidUriException {
         CreateUserRequest req = buildRequest();
 
         when(mockRepository.addUser(any(User.class)))
@@ -86,7 +84,7 @@ class UserResourceTest {
         CreateUserRequest req = buildRequest("&^£@");
 
         assertThatThrownBy(() -> resource.createUser(req))
-                .isOfAnyClassIn(URISyntaxException.class);
+                .isOfAnyClassIn(InvalidUriException.class);
 
         verify(mockRepository, never()).addUser(any());
     }

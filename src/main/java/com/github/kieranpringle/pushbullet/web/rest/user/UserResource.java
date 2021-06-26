@@ -1,6 +1,7 @@
 package com.github.kieranpringle.pushbullet.web.rest.user;
 
 import com.github.kieranpringle.pushbullet.domain.User;
+import com.github.kieranpringle.pushbullet.exceptions.InvalidUriException;
 import com.github.kieranpringle.pushbullet.exceptions.UserAlreadyExistsException;
 import com.github.kieranpringle.pushbullet.repository.UserRepository;
 import java.net.URI;
@@ -38,16 +39,27 @@ public class UserResource {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@RequestBody CreateUserRequest userToCreate)
-            throws UserAlreadyExistsException, URISyntaxException {
+            throws UserAlreadyExistsException, InvalidUriException {
         String name = userToCreate.getName();
         log.info("Request to create user : {}", name);
+        testUriCompatibility(name);
 
-        // leverage URISyntaxException to test if we can store this user
-        URI resultUri = new URI(String.format("%s/%s", API_BASE, name));
         User createdUser = repository.addUser(buildUser(userToCreate));
 
         log.info("User successfully created : {}", name);
         return createdUser;
+    }
+
+    private void testUriCompatibility(String name) throws InvalidUriException {
+        try {
+            // leverage URISyntaxException to test if we can retrieve this user later
+            new URI(String.format("%s/%s", API_BASE, name));
+        } catch (URISyntaxException e) {
+            throw new InvalidUriException(
+                    String.format("Username { %s } contains invalid characters", name),
+                    e
+            );
+        }
     }
 
     private User buildUser(CreateUserRequest userToCreate) {

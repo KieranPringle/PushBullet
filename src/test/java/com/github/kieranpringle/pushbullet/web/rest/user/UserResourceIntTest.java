@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kieranpringle.pushbullet.PushbulletApplication;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
@@ -83,21 +82,18 @@ public class UserResourceIntTest {
 
     @Test
     public void canNotCreateUriIncompatibleUser() throws Exception {
-        //    createUserRequest("¢#€#", "token")
-        //            .andExpect(status().isCreated());
+            createUserRequest("¢#€#", "token")
+                    .andExpect(status().isBadRequest());
 
-        // to implement: proper exception mapping
     }
 
     @Test
-    public void canNotCreateDuplicateUser() {
-        //    createUserRequest("user", "token1")
-        //            .andExpect(status().isCreated());
+    public void canNotCreateDuplicateUser() throws Exception {
+            createUserRequest("user", "token1")
+                    .andExpect(status().isCreated());
 
-        //    createUserRequest("user", "token2")
-        //            .andExpect(status().isCreated());
-
-        // to implement: proper exception mapping
+            createUserRequest("user", "token2")
+                    .andExpect(status().isBadRequest());
     }
 
     private Map responseBodyToUser(String body) throws JsonProcessingException {
