@@ -97,7 +97,6 @@ class UserResourceTest {
         verify(mockRepository, atMostOnce()).getAllUsers();
     }
 
-
     private CreateUserRequest buildRequest() {
         return buildRequest(USERNAME);
     }

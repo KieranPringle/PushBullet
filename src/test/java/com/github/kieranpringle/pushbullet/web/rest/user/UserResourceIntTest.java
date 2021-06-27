@@ -98,7 +98,6 @@ public class UserResourceIntTest {
     public void canNotCreateUriIncompatibleUser() throws Exception {
             createUserRequest("¢#€#", "token")
                     .andExpect(status().isBadRequest());
-
     }
 
     @Test
