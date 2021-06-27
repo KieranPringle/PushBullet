@@ -7,9 +7,11 @@ import com.github.kieranpringle.pushbullet.repository.UserRepository;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +50,11 @@ public class UserResource {
 
         log.info("User successfully created : {}", name);
         return createdUser;
+    }
+
+    @GetMapping
+    public Collection<User> getUsers() {
+        return repository.getAllUsers();
     }
 
     private void testUriCompatibility(String name) throws InvalidUriException {

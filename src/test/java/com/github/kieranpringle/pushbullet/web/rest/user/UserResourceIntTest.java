@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kieranpringle.pushbullet.PushbulletApplication;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static com.github.kieranpringle.pushbullet.util.RequestUtil.getRequest;
 import static com.github.kieranpringle.pushbullet.util.RequestUtil.postRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,7 +51,7 @@ public class UserResourceIntTest {
                 .getResponse()
                 .getContentAsString();
 
-        Map created = responseBodyToUser(res);
+        Map created = parseCreateUserResponse(res);
 
         assertThat(created.get("name"))
                 .as("name should be the same as passed in request")
@@ -64,7 +66,7 @@ public class UserResourceIntTest {
         String baseUsername = UUID.randomUUID().toString();
         String token = UUID.randomUUID().toString();
 
-        Collection<String> createdUsers = new ArrayList<>();
+        Collection<String> createdUserNames = new ArrayList<>();
 
         for (int i = 0; i < 5; i++) {
             String username = String.format("%s_%d", baseUsername, i);
@@ -74,10 +76,22 @@ public class UserResourceIntTest {
                     token)
                 .andExpect(status().isCreated());
 
-            createdUsers.add(username);
+            createdUserNames.add(username);
         }
 
-        // to implement `GET /users`
+        String res = getAllUsersRequest()
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Collection allUsers = parseGetAllUsersResponse(res);
+
+        for (Object user : allUsers) {
+            assertThat(createdUserNames).anySatisfy(name -> {
+                assertThat(user.toString()).contains(name);
+            });
+        }
     }
 
     @Test
@@ -96,8 +110,16 @@ public class UserResourceIntTest {
                     .andExpect(status().isBadRequest());
     }
 
-    private Map responseBodyToUser(String body) throws JsonProcessingException {
+    private Map parseCreateUserResponse(String body) throws JsonProcessingException {
         return MAPPER.readValue(body, Map.class);
+    }
+
+    private List parseGetAllUsersResponse(String body) throws JsonProcessingException {
+        return MAPPER.readValue(body, List.class);
+    }
+
+    private ResultActions getAllUsersRequest() throws Exception {
+        return mvc.perform(getRequest("/users"));
     }
 
     private ResultActions createUserRequest(String name, String token) throws Exception {
