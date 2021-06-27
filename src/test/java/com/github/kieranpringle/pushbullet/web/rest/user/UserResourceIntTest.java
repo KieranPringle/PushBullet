@@ -3,6 +3,7 @@ package com.github.kieranpringle.pushbullet.web.rest.user;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kieranpringle.pushbullet.PushbulletApplication;
+import com.github.kieranpringle.pushbullet.util.RequestUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,8 +20,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static com.github.kieranpringle.pushbullet.util.RequestUtil.createUserRequest;
+import static com.github.kieranpringle.pushbullet.util.RequestUtil.getAllUsersRequest;
 import static com.github.kieranpringle.pushbullet.util.RequestUtil.getRequest;
-import static com.github.kieranpringle.pushbullet.util.RequestUtil.postRequest;
+import static com.github.kieranpringle.pushbullet.util.RequestUtil.parseArrayResponse;
+import static com.github.kieranpringle.pushbullet.util.RequestUtil.parseResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,18 +49,18 @@ public class UserResourceIntTest {
         String username = UUID.randomUUID().toString();
         String accessToken = UUID.randomUUID().toString();
 
-        String res = createUserRequest(username, accessToken)
+        String res =  mvc.perform(createUserRequest(username, accessToken))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        Map created = parseCreateUserResponse(res);
+        Map created = parseResponse(res);
 
         assertThat(created.get("name"))
                 .as("name should be the same as passed in request")
                 .isEqualTo(username);
-        assertThat(created.get("accessToken")).isEqualTo(accessToken)
+        assertThat(created.get("accessToken"))
                 .as("accessToken should be the same as passed in request")
                 .isEqualTo(accessToken);
     }
@@ -71,21 +75,21 @@ public class UserResourceIntTest {
         for (int i = 0; i < 5; i++) {
             String username = String.format("%s_%d", baseUsername, i);
 
-            createUserRequest(
+            mvc.perform(createUserRequest(
                     username,
-                    token)
+                    token))
                 .andExpect(status().isCreated());
 
             createdUserNames.add(username);
         }
 
-        String res = getAllUsersRequest()
+        String res = mvc.perform(getAllUsersRequest())
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        Collection allUsers = parseGetAllUsersResponse(res);
+        Collection allUsers = parseArrayResponse(res);
 
         for (Object user : allUsers) {
             assertThat(createdUserNames).anySatisfy(name -> {
@@ -96,36 +100,16 @@ public class UserResourceIntTest {
 
     @Test
     public void canNotCreateUriIncompatibleUser() throws Exception {
-            createUserRequest("¢#€#", "token")
+            mvc.perform(createUserRequest("¢#€#", "token"))
                     .andExpect(status().isBadRequest());
     }
 
     @Test
     public void canNotCreateDuplicateUser() throws Exception {
-            createUserRequest("user", "token1")
+        mvc.perform(createUserRequest("user", "token1"))
                     .andExpect(status().isCreated());
 
-            createUserRequest("user", "token2")
+        mvc.perform(createUserRequest("user", "token2"))
                     .andExpect(status().isBadRequest());
-    }
-
-    private Map parseCreateUserResponse(String body) throws JsonProcessingException {
-        return MAPPER.readValue(body, Map.class);
-    }
-
-    private List parseGetAllUsersResponse(String body) throws JsonProcessingException {
-        return MAPPER.readValue(body, List.class);
-    }
-
-    private ResultActions getAllUsersRequest() throws Exception {
-        return mvc.perform(getRequest("/users"));
-    }
-
-    private ResultActions createUserRequest(String name, String token) throws Exception {
-        CreateUserRequest req = new CreateUserRequest();
-        req.setName(name);
-        req.setAccessToken(token);
-
-        return mvc.perform(postRequest("/users", req));
     }
 }

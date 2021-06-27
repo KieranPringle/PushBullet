@@ -5,12 +5,12 @@ import com.github.kieranpringle.pushbullet.domain.User;
 public class PushBulletMessage {
     private final String title;
     private final String message;
-    private final User user;
+    private final User recipient;
 
-    public PushBulletMessage(String title, String message, User user) {
+    public PushBulletMessage(String title, String message, User recipient) {
         this.title = title;
         this.message = message;
-        this.user = user;
+        this.recipient = recipient;
     }
 
     public String getTitle() {
@@ -21,7 +21,7 @@ public class PushBulletMessage {
         return message;
     }
 
-    public User getUser() {
-        return user;
+    public User getRecipient() {
+        return recipient;
     }
 }

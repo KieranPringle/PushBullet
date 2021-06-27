@@ -51,7 +51,7 @@ public class PushBulletConnector {
             throws JsonProcessingException, URISyntaxException {
 
         return HttpRequest.newBuilder()
-                .header("Access-Token", message.getUser().getAccessToken())
+                .header("Access-Token", message.getRecipient().getAccessToken())
                 .header("Content-Type", MediaType.APPLICATION_JSON.toString())
                 .POST(buildJsonBody(message))
                 .uri(new URI(PUSH_BULLET_CREATE_PUSH_URL))
